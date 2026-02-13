@@ -2,29 +2,28 @@ import { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { BookCard } from './components/BookCard';
 import { CommunityPanel } from './components/CommunityPanel';
+import { ReviewsModal } from './components/ReviewsModal';
 import { Search, Bell, ChevronRight } from 'lucide-react';
+import { booksByMonth, currentUser } from './data';
 
 // Mock Data
+const januaryBooks = booksByMonth['2026-01'] || [];
+const februaryBooks = booksByMonth['2026-02'] || [];
 
-
-const januaryBooks = [
-  { id: 1, title: 'Elite de Prata', author: 'Dani Francis', cover: 'https://m.media-amazon.com/images/I/81tycP3bo7L._SY466_.jpg' },
-
-];
-
-const februaryBooks = [
-  { id: 1, title: 'Anjos e Demônios', author: 'Dan Brown', cover: 'https://m.media-amazon.com/images/I/51MWbI+i+XL._SY425_.jpg' },
-
-];
 
 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
+  const [isReviewsOpen, setIsReviewsOpen] = useState(false);
 
 
   return (
     <div className="flex min-h-screen bg-brand-light font-sans text-brand-dark overflow-hidden">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onOpenReviews={() => setIsReviewsOpen(true)}
+      />
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Top Bar */}
@@ -45,8 +44,8 @@ function App() {
             </button>
 
             <button className="flex items-center gap-3 bg-brand-primary text-white pl-1 pr-4 py-1.5 rounded-2xl shadow-lg hover:bg-brand-primary/90 transition-colors">
-              <img src="https://i.pravatar.cc/150?u=user" alt="Profile" className="w-8 h-8 rounded-xl bg-white/20" />
-              <span className="font-medium text-sm">Olá, Leitor</span>
+              <img src={currentUser.avatarUrl} alt="Profile" className="w-8 h-8 rounded-xl bg-white/20" />
+              <span className="font-medium text-sm">Olá, {currentUser.name}</span>
             </button>
           </div>
         </header>
@@ -106,6 +105,7 @@ function App() {
       </main>
 
       <CommunityPanel />
+      <ReviewsModal isOpen={isReviewsOpen} onClose={() => setIsReviewsOpen(false)} />
     </div>
   );
 }

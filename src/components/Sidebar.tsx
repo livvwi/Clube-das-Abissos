@@ -4,9 +4,10 @@ import { Home, BookOpen, Settings, LogOut } from 'lucide-react';
 interface SidebarProps {
     activeTab: string;
     setActiveTab: (tab: string) => void;
+    onOpenReviews: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onOpenReviews }) => {
     const menuItems = [
         { id: 'home', icon: Home, label: 'Início' },
         { id: 'library', icon: BookOpen, label: 'Resenhas' },
@@ -27,7 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
                     return (
                         <button
                             key={item.id}
-                            onClick={() => setActiveTab(item.id)}
+                            onClick={() => item.id === 'library' ? onOpenReviews() : setActiveTab(item.id)}
                             className={`p-3 rounded-2xl transition-all duration-300 flex items-center justify-center group relative
                 ${isActive
                                     ? 'bg-brand-primary text-white shadow-md'

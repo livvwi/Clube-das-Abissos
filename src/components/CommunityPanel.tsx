@@ -3,8 +3,8 @@ import { Send, MoreHorizontal, Smile, Paperclip } from 'lucide-react';
 
 export const CommunityPanel: React.FC = () => {
     const messages = [
-        { id: 1, user: 'Ana Silva', avatar: 'https://i.pravatar.cc/150?u=1', text: 'Alguém já começou o livro do mês?', time: '10:30', isMe: false },
-        { id: 2, user: 'Carlos M.', avatar: 'https://i.pravatar.cc/150?u=2', text: 'Sim! O capítulo 3 explodiu minha mente 🤯', time: '10:32', isMe: false },
+        { id: 1, user: 'Letícia', avatar: 'icon-let.jpeg', text: 'Alguém já começou o livro do mês?', time: '10:30', isMe: false },
+        { id: 2, user: 'Julianna', avatar: 'icon-juju.png', text: 'Sim! O capítulo 3 explodiu minha mente 🤯', time: '10:32', isMe: false },
         { id: 3, user: 'Você', avatar: 'https://i.pravatar.cc/150?u=3', text: 'Sem spoilers! Vou começar hoje à noite.', time: '10:35', isMe: true },
     ];
 
@@ -18,8 +18,6 @@ export const CommunityPanel: React.FC = () => {
                     <MoreHorizontal size={20} />
                 </button>
             </div>
-
-
 
             {/* Chat Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
