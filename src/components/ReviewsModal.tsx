@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Star, Trash2, BookOpen, User, Calendar, ChevronDown } from 'lucide-react';
-import { booksByMonth, getMonthName, currentUser } from '../data';
+import { booksByMonth, getMonthName } from '../data';
+import { useAuth } from '../contexts/AuthContext';
 
 // --- Interfaces ---
 export interface Review {
@@ -51,6 +52,7 @@ const saveReviewsToStorage = (reviews: Review[]) => {
 
 // --- Component ---
 export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) => {
+    const { currentUser } = useAuth();
     const [reviews, setReviews] = useState<Review[]>([]);
     // Use currently available months from data
     const availableMonths = Object.keys(booksByMonth).sort();
@@ -125,6 +127,7 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!validate()) return;
+        if (!currentUser) return;
         setIsSubmitting(true);
 
         const book = getBooksForMonth(selectedMonth).find(b => b.id === form.bookId);
@@ -143,7 +146,12 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
             text: form.text,
             date: new Date().toISOString(),
             spoiler: form.spoiler,
-            user: currentUser
+            user: {
+                id: currentUser.id,
+                name: currentUser.name,
+                username: currentUser.username,
+                avatarUrl: currentUser.avatarUrl
+            }
         };
 
         const updatedReviews = [newReview, ...reviews];
@@ -298,83 +306,93 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
                             Resenhando para: <span className="font-bold text-brand-primary">{getMonthName(selectedMonth)}</span>
                         </p>
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Selecionar Livro *</label>
-                                <div className="relative">
-                                    <select
-                                        value={form.bookId}
-                                        onChange={e => setForm({ ...form, bookId: Number(e.target.value) })}
-                                        className={`w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 appearance-none transition-all ${errors.bookId ? 'border-red-500' : 'border-gray-200'}`}
+                        {!currentUser ? (
+                            <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                                <User size={48} className="text-gray-300 mb-3" />
+                                <p className="text-gray-500 font-medium mb-2">Faça login para postar sua resenha</p>
+                                <p className="text-xs text-gray-400 text-center px-6">
+                                    Participe da discussão com Letícia, Julianna e Lívia!
+                                </p>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Selecionar Livro *</label>
+                                    <div className="relative">
+                                        <select
+                                            value={form.bookId}
+                                            onChange={e => setForm({ ...form, bookId: Number(e.target.value) })}
+                                            className={`w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 appearance-none transition-all ${errors.bookId ? 'border-red-500' : 'border-gray-200'}`}
+                                        >
+                                            <option value={0}>Selecione um livro...</option>
+                                            {currentBooks.map(book => (
+                                                <option key={book.id} value={book.id}>
+                                                    {book.title}
+                                                </option>
+                                            ))}
+                                            {currentBooks.length === 0 && <option disabled>Sem livros neste mês</option>}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                                    </div>
+                                    {errors.bookId && <p className="text-red-500 text-xs mt-1">{errors.bookId}</p>}
+
+                                    {/* Auto-filled Author Display */}
+                                    {selectedBookDetails && (
+                                        <p className="text-xs text-brand-secondary mt-2 px-1 flex items-center gap-1">
+                                            <User size={12} />
+                                            Autor: <span className="font-semibold text-brand-primary">{selectedBookDetails.author}</span>
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Avaliação *</label>
+                                    <div className="flex gap-2 items-center">
+                                        {renderStars(form.rating, true, (r) => setForm({ ...form, rating: r }))}
+                                        <span className="text-sm text-gray-500 ml-2 font-medium">{form.rating > 0 ? form.rating + '/5' : 'Selecione'}</span>
+                                    </div>
+                                    {errors.rating && <p className="text-red-500 text-xs mt-1">{errors.rating}</p>}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Sua opinião *</label>
+                                    <textarea
+                                        value={form.text}
+                                        onChange={e => setForm({ ...form, text: e.target.value })}
+                                        className={`w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 h-32 resize-none transition-all ${errors.text ? 'border-red-500' : 'border-gray-200'}`}
+                                        placeholder="O que você achou do livro? (mín. 15 caracteres)"
+                                    ></textarea>
+                                    <div className="flex justify-between mt-1">
+                                        {errors.text && <p className="text-red-500 text-xs">{errors.text}</p>}
+                                        <p className={`text-xs ml-auto ${form.text.length > 2000 ? 'text-red-500' : 'text-gray-400'}`}>
+                                            {form.text.length}/2000
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="spoiler"
+                                        checked={form.spoiler}
+                                        onChange={e => setForm({ ...form, spoiler: e.target.checked })}
+                                        className="w-4 h-4 text-brand-primary rounded border-gray-300 focus:ring-brand-primary"
+                                    />
+                                    <label htmlFor="spoiler" className="text-sm text-gray-600 select-none cursor-pointer">Contém spoilers?</label>
+                                </div>
+
+                                <div className="pt-2">
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmitting || currentBooks.length === 0}
+                                        className="w-full bg-brand-primary text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl hover:bg-brand-primary/90 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
-                                        <option value={0}>Selecione um livro...</option>
-                                        {currentBooks.map(book => (
-                                            <option key={book.id} value={book.id}>
-                                                {book.title}
-                                            </option>
-                                        ))}
-                                        {currentBooks.length === 0 && <option disabled>Sem livros neste mês</option>}
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                                        {isSubmitting ? 'Publicando...' : 'Publicar Resenha'}
+                                    </button>
                                 </div>
-                                {errors.bookId && <p className="text-red-500 text-xs mt-1">{errors.bookId}</p>}
 
-                                {/* Auto-filled Author Display */}
-                                {selectedBookDetails && (
-                                    <p className="text-xs text-brand-secondary mt-2 px-1 flex items-center gap-1">
-                                        <User size={12} />
-                                        Autor: <span className="font-semibold text-brand-primary">{selectedBookDetails.author}</span>
-                                    </p>
-                                )}
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Avaliação *</label>
-                                <div className="flex gap-2 items-center">
-                                    {renderStars(form.rating, true, (r) => setForm({ ...form, rating: r }))}
-                                    <span className="text-sm text-gray-500 ml-2 font-medium">{form.rating > 0 ? form.rating + '/5' : 'Selecione'}</span>
-                                </div>
-                                {errors.rating && <p className="text-red-500 text-xs mt-1">{errors.rating}</p>}
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Sua opinião *</label>
-                                <textarea
-                                    value={form.text}
-                                    onChange={e => setForm({ ...form, text: e.target.value })}
-                                    className={`w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 h-32 resize-none transition-all ${errors.text ? 'border-red-500' : 'border-gray-200'}`}
-                                    placeholder="O que você achou do livro? (mín. 15 caracteres)"
-                                ></textarea>
-                                <div className="flex justify-between mt-1">
-                                    {errors.text && <p className="text-red-500 text-xs">{errors.text}</p>}
-                                    <p className={`text-xs ml-auto ${form.text.length > 2000 ? 'text-red-500' : 'text-gray-400'}`}>
-                                        {form.text.length}/2000
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="spoiler"
-                                    checked={form.spoiler}
-                                    onChange={e => setForm({ ...form, spoiler: e.target.checked })}
-                                    className="w-4 h-4 text-brand-primary rounded border-gray-300 focus:ring-brand-primary"
-                                />
-                                <label htmlFor="spoiler" className="text-sm text-gray-600 select-none cursor-pointer">Contém spoilers?</label>
-                            </div>
-
-                            <div className="pt-2">
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting || currentBooks.length === 0}
-                                    className="w-full bg-brand-primary text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl hover:bg-brand-primary/90 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                                >
-                                    {isSubmitting ? 'Publicando...' : 'Publicar Resenha'}
-                                </button>
-                            </div>
-
-                        </form>
+                            </form>
+                        )}
                     </div>
                 </div>
             </div>

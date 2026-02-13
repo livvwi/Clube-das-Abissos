@@ -3,8 +3,11 @@ import { Sidebar } from './components/Sidebar';
 import { BookCard } from './components/BookCard';
 import { CommunityPanel } from './components/CommunityPanel';
 import { ReviewsModal } from './components/ReviewsModal';
-import { Search, Bell, ChevronRight } from 'lucide-react';
-import { booksByMonth, currentUser } from './data';
+import { Search, Bell, ChevronRight, LogIn, LogOut, Moon, Sun } from 'lucide-react';
+import { booksByMonth } from './data';
+import { useAuth } from './contexts/AuthContext';
+import { usePreferences } from './contexts/PreferencesContext';
+import { LoginModal } from './components/LoginModal';
 
 // Mock Data
 const januaryBooks = booksByMonth['2026-01'] || [];
@@ -15,7 +18,13 @@ const februaryBooks = booksByMonth['2026-02'] || [];
 function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const { currentUser, logout, loading } = useAuth();
+  const { preferences, toggleTheme } = usePreferences();
 
+  // Better approach: Derived state for the modal
+  const showLoginModal = isLoginOpen || (!loading && !currentUser);
+  const isLoginRequired = !loading && !currentUser ? true : false;
 
   return (
     <div className="flex min-h-screen bg-brand-light font-sans text-brand-dark overflow-hidden">
@@ -38,15 +47,49 @@ function App() {
           </div>
 
           <div className="flex items-center gap-6">
+            <button
+              onClick={toggleTheme}
+              className="relative bg-white p-3 rounded-2xl shadow-sm text-brand-secondary hover:text-brand-primary transition-colors"
+              title={preferences.theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+            >
+              {preferences.theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
+
             <button className="relative bg-white p-3 rounded-2xl shadow-sm text-brand-secondary hover:text-brand-primary transition-colors">
               <Bell size={20} />
               <span className="absolute top-3 right-3 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
 
-            <button className="flex items-center gap-3 bg-brand-primary text-white pl-1 pr-4 py-1.5 rounded-2xl shadow-lg hover:bg-brand-primary/90 transition-colors">
-              <img src={currentUser.avatarUrl} alt="Profile" className="w-8 h-8 rounded-xl bg-white/20" />
-              <span className="font-medium text-sm">Olá, {currentUser.name}</span>
-            </button>
+            <div className="flex items-center gap-3 bg-brand-primary text-white pl-1 pr-4 py-1.5 rounded-2xl shadow-lg hover:bg-brand-primary/90 transition-colors group cursor-pointer">
+              {currentUser ? (
+                <>
+                  <img src={currentUser.avatarUrl} alt="Profile" className="w-8 h-8 rounded-xl bg-white/20 object-cover" />
+                  <span className="font-medium text-sm">Olá, {currentUser.name}</span>
+                  <div className="w-px h-4 bg-white/20 mx-1"></div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      logout();
+                    }}
+                    title="Sair"
+                    className="opacity-70 hover:opacity-100 hover:text-red-200 transition-all"
+                  >
+                    <LogOut size={16} />
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="flex items-center gap-2 cursor-pointer w-full h-full text-left"
+                  onClick={() => setIsLoginOpen(true)}
+                >
+                  <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                    <LogIn size={16} />
+                  </div>
+                  <span className="font-medium text-sm">Olá, Leitor</span>
+                  <span className="text-xs bg-white/20 px-2 py-0.5 rounded text-white/90">Entrar</span>
+                </button>
+              )}
+            </div>
           </div>
         </header>
 
@@ -106,6 +149,11 @@ function App() {
 
       <CommunityPanel />
       <ReviewsModal isOpen={isReviewsOpen} onClose={() => setIsReviewsOpen(false)} />
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setIsLoginOpen(false)}
+        isRequired={isLoginRequired}
+      />
     </div>
   );
 }

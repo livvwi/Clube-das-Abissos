@@ -17,10 +17,5 @@ export const getMonthName = (monthKey: string) => {
     return date.toLocaleString('pt-BR', { month: 'long', timeZone: 'UTC' }); // Force UTC to avoid timezone shifts
 };
 
-// Current mocked user
-export const currentUser = {
-    id: 'user_123',
-    name: 'Leitor',
-    username: 'leitor_oficial',
-    avatarUrl: 'https://i.pravatar.cc/150?u=user'
-};
+
+

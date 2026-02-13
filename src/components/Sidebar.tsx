@@ -1,5 +1,6 @@
-import React from 'react';
-import { Home, BookOpen, Settings, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { Home, BookOpen, Settings } from 'lucide-react';
+import { SettingsModal } from './SettingsModal';
 
 interface SidebarProps {
     activeTab: string;
@@ -8,6 +9,8 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onOpenReviews }) => {
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
     const menuItems = [
         { id: 'home', icon: Home, label: 'Início' },
         { id: 'library', icon: BookOpen, label: 'Resenhas' },
@@ -47,13 +50,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onOpe
             </nav>
 
             <div className="mt-auto flex flex-col gap-6 w-full px-4">
-                <button className="p-3 rounded-2xl text-brand-secondary hover:bg-white hover:shadow-sm transition-all flex items-center justify-center">
+                <button
+                    onClick={() => setIsSettingsOpen(true)}
+                    className="p-3 rounded-2xl text-brand-secondary hover:bg-white hover:shadow-sm transition-all flex items-center justify-center">
                     <Settings size={24} />
                 </button>
-                <button className="p-3 rounded-2xl text-brand-secondary hover:bg-red-50 hover:text-red-400 transition-all flex items-center justify-center">
-                    <LogOut size={24} />
-                </button>
             </div>
+
+            <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
         </aside>
     );
 };

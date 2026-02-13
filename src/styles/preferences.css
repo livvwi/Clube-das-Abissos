@@ -1,0 +1,32 @@
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark {
+    background-color: #1a1a2e;
+    color: #e0e0e0;
+}
+
+/* High Contrast mode */
+body.high-contrast {
+    filter: contrast(1.25);
+    background-color: #000;
+    color: #fff;
+}
+
+/* Base font sizes */
+:root[data-font-size="small"] {
+    --base-font-size: 14px;
+}
+
+:root[data-font-size="medium"] {
+    --base-font-size: 16px;
+}
+
+:root[data-font-size="large"] {
+    --base-font-size: 18px;
+}
+
+body {
+    font-size: var(--base-font-size) !important;
+}
