@@ -4,6 +4,8 @@ import { createPortal } from 'react-dom';
 import { X, Star, Trash2, BookOpen, User, Calendar, ChevronDown } from 'lucide-react';
 import { booksByMonth, getMonthName } from '../data';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationsContext';
+import { usePreferences } from '../contexts/PreferencesContext';
 
 // --- Interfaces ---
 export interface Review {
@@ -27,6 +29,9 @@ export interface Review {
 interface ReviewsModalProps {
     isOpen: boolean;
     onClose: () => void;
+    targetMonth?: string | null;
+    targetReviewId?: string | null;
+    targetBookId?: number | null;
 }
 
 // --- LocalStorage Helpers ---
@@ -51,8 +56,10 @@ const saveReviewsToStorage = (reviews: Review[]) => {
 };
 
 // --- Component ---
-export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) => {
+export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose, targetMonth, targetReviewId, targetBookId }) => {
     const { currentUser } = useAuth();
+    const { addNotification } = useNotifications();
+    const { preferences } = usePreferences();
     const [reviews, setReviews] = useState<Review[]>([]);
     // Use currently available months from data
     const availableMonths = Object.keys(booksByMonth).sort();
@@ -80,14 +87,52 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
         setReviews(loadReviews());
     }, []);
 
+    // Sync selectedMonth with targetMonth
+    useEffect(() => {
+        if (isOpen && targetMonth && availableMonths.includes(targetMonth)) {
+            setSelectedMonth(targetMonth);
+        }
+    }, [isOpen, targetMonth, availableMonths]);
+
+    // Sync form with targetBookId
+    useEffect(() => {
+        if (isOpen && targetBookId) {
+            setForm(prev => ({ ...prev, bookId: targetBookId }));
+            setTimeout(() => {
+                const textarea = document.getElementById('review-textarea');
+                if (textarea) textarea.focus();
+            }, 100);
+        }
+    }, [isOpen, targetBookId]);
+
+    // Scroll to target review and highlight
+    useEffect(() => {
+        if (isOpen && targetReviewId) {
+            const timer = setTimeout(() => {
+                const el = document.getElementById(`review-${targetReviewId}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.classList.add('ring-2', 'ring-brand-primary', 'ring-offset-2');
+                    setTimeout(() => {
+                        el.classList.remove('ring-2', 'ring-brand-primary', 'ring-offset-2');
+                    }, 2500);
+                }
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen, targetReviewId, selectedMonth, reviews]);
+
     // Handle Overflow & Escape key
     useEffect(() => {
+        const mainScroll = document.getElementById('main-scroll-container');
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+            if (mainScroll) mainScroll.style.overflow = 'hidden';
             // Focus modal on open
             setTimeout(() => modalRef.current?.focus(), 50);
         } else {
             document.body.style.overflow = '';
+            if (mainScroll) mainScroll.style.overflow = '';
         }
 
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -100,6 +145,7 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
 
         return () => {
             document.body.style.overflow = '';
+            if (mainScroll) mainScroll.style.overflow = '';
             window.removeEventListener('keydown', handleKeyDown);
         };
     }, [isOpen, onClose]);
@@ -158,6 +204,28 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
         setReviews(updatedReviews);
         saveReviewsToStorage(updatedReviews); // Persist
 
+        // Dispatch notification
+        if (preferences.notifications) {
+            addNotification({
+                type: 'review',
+                actor: {
+                    id: currentUser.id,
+                    name: currentUser.name,
+                    username: currentUser.username,
+                    avatarUrl: currentUser.avatarUrl
+                },
+                meta: {
+                    monthKey: selectedMonth,
+                    bookId: book.id,
+                    bookTitle: book.title,
+                    reviewId: newReview.id
+                }
+            });
+        }
+
+        // Dispatch review sync event
+        window.dispatchEvent(new Event('reviews:updated'));
+
         // Reset form
         setForm({
             bookId: 0,
@@ -174,6 +242,7 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
             const updated = reviews.filter(r => r.id !== id);
             setReviews(updated);
             saveReviewsToStorage(updated);
+            window.dispatchEvent(new Event('reviews:updated'));
         }
     };
 
@@ -210,7 +279,7 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
         >
             <div
                 ref={modalRef}
-                className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden relative"
+                className="bg-white w-full max-w-4xl h-[100dvh] md:h-[90vh] md:rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden relative"
                 onClick={e => e.stopPropagation()} // Prevent close on modal click
                 tabIndex={-1}
             >
@@ -225,17 +294,26 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
                 </button>
 
                 {/* --- Left Column: Posts List --- */}
-                <div className="w-full md:w-3/5 bg-gray-50 flex flex-col border-r border-gray-100 h-[50vh] md:h-auto">
-                    <div className="p-6 border-b border-gray-200 bg-white sticky top-0 z-10 space-y-3">
-                        <h2 id="modal-title" className="font-serif font-bold text-2xl text-brand-primary">Resenhas do Clube</h2>
+                <div className="w-full md:w-3/5 bg-gray-50 flex flex-col border-r border-gray-100 h-[50vh] md:h-full">
+                    <div className="p-4 md:p-6 border-b border-gray-200 bg-white sticky top-0 z-10 space-y-3 shrink-0">
+                        <div className="flex justify-between items-center">
+                            <h2 id="modal-title" className="font-serif font-bold text-xl md:text-2xl text-brand-primary">Resenhas do Clube</h2>
+                            <button
+                                onClick={onClose}
+                                className="md:hidden p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition-colors"
+                                aria-label="Fechar"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
 
                         {/* Month Selector */}
-                        <div className="flex gap-2 bg-gray-100 p-1 rounded-lg w-fit">
+                        <div className="flex gap-2 bg-gray-100 p-1 rounded-lg w-fit max-w-full overflow-x-auto hide-scrollbar">
                             {availableMonths.map(month => (
                                 <button
                                     key={month}
                                     onClick={() => setSelectedMonth(month)}
-                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${selectedMonth === month
+                                    className={`px-3 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all whitespace-nowrap ${selectedMonth === month
                                         ? 'bg-white text-brand-primary shadow-sm'
                                         : 'text-gray-500 hover:text-brand-dark'
                                         }`}
@@ -245,10 +323,10 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
                             ))}
                         </div>
 
-                        <p className="text-sm text-gray-500">{filteredReviews.length} resenhas em {getMonthName(selectedMonth)}</p>
+                        <p className="text-xs md:text-sm text-gray-500">{filteredReviews.length} resenhas em {getMonthName(selectedMonth)}</p>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar">
                         {filteredReviews.length === 0 ? (
                             <div className="text-center py-10 text-gray-400">
                                 <BookOpen size={48} className="mx-auto mb-3 opacity-50" />
@@ -256,7 +334,7 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
                             </div>
                         ) : (
                             filteredReviews.map(review => (
-                                <div key={review.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                                <div id={`review-${review.id}`} key={review.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-500">
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
                                             <h3 className="font-bold text-lg text-brand-primary leading-tight">{review.bookTitle}</h3>
@@ -295,21 +373,23 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
                 </div>
 
                 {/* --- Right Column: Post Form --- */}
-                <div className="w-full md:w-2/5 flex flex-col h-[50vh] md:h-auto overflow-y-auto md:overflow-visible">
-                    <div className="p-6 bg-white flex-1">
-                        <h3 className="font-bold text-xl text-brand-dark mb-6 flex items-center gap-2">
-                            <span className="bg-brand-primary text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">✎</span>
-                            Nova Resenha
-                        </h3>
+                <div className="w-full md:w-2/5 flex flex-col h-[50vh] md:h-full border-t border-gray-200 md:border-t-0 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] md:shadow-none z-20">
+                    <div className="p-4 md:p-6 bg-white flex-1 overflow-y-auto pb-safe-bottom hide-scrollbar">
+                        <div className="flex justify-between items-center mb-4 md:mb-6">
+                            <h3 className="font-bold text-lg md:text-xl text-brand-dark flex items-center gap-2">
+                                <span className="bg-brand-primary text-white w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">✎</span>
+                                Nova Resenha
+                            </h3>
+                        </div>
 
-                        <p className="text-sm text-gray-500 mb-4 bg-brand-light p-3 rounded-lg border border-brand-primary/10">
+                        <p className="text-xs md:text-sm text-gray-500 mb-4 bg-brand-light p-3 rounded-lg border border-brand-primary/10">
                             Resenhando para: <span className="font-bold text-brand-primary">{getMonthName(selectedMonth)}</span>
                         </p>
 
                         {!currentUser ? (
-                            <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-                                <User size={48} className="text-gray-300 mb-3" />
-                                <p className="text-gray-500 font-medium mb-2">Faça login para postar sua resenha</p>
+                            <div className="flex flex-col items-center justify-center h-48 md:h-64 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                                <User size={40} className="text-gray-300 mb-3" />
+                                <p className="text-gray-500 font-medium mb-2 text-sm text-center">Faça login para postar sua resenha</p>
                                 <p className="text-xs text-gray-400 text-center px-6">
                                     Participe da discussão com Letícia, Julianna e Lívia!
                                 </p>
@@ -322,7 +402,7 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
                                         <select
                                             value={form.bookId}
                                             onChange={e => setForm({ ...form, bookId: Number(e.target.value) })}
-                                            className={`w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 appearance-none transition-all ${errors.bookId ? 'border-red-500' : 'border-gray-200'}`}
+                                            className={`w-full p-2.5 md:p-3 text-sm bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 appearance-none transition-all ${errors.bookId ? 'border-red-500' : 'border-gray-200'}`}
                                         >
                                             <option value={0}>Selecione um livro...</option>
                                             {currentBooks.map(book => (
@@ -340,7 +420,7 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
                                     {selectedBookDetails && (
                                         <p className="text-xs text-brand-secondary mt-2 px-1 flex items-center gap-1">
                                             <User size={12} />
-                                            Autor: <span className="font-semibold text-brand-primary">{selectedBookDetails.author}</span>
+                                            Autor: <span className="font-semibold text-brand-primary line-clamp-1">{selectedBookDetails.author}</span>
                                         </p>
                                     )}
                                 </div>
@@ -357,9 +437,10 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Sua opinião *</label>
                                     <textarea
+                                        id="review-textarea"
                                         value={form.text}
                                         onChange={e => setForm({ ...form, text: e.target.value })}
-                                        className={`w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 h-32 resize-none transition-all ${errors.text ? 'border-red-500' : 'border-gray-200'}`}
+                                        className={`w-full p-2.5 md:p-3 text-sm bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 h-28 md:h-32 resize-none transition-all ${errors.text ? 'border-red-500' : 'border-gray-200'}`}
                                         placeholder="O que você achou do livro? (mín. 15 caracteres)"
                                     ></textarea>
                                     <div className="flex justify-between mt-1">
@@ -385,7 +466,7 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) =
                                     <button
                                         type="submit"
                                         disabled={isSubmitting || currentBooks.length === 0}
-                                        className="w-full bg-brand-primary text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl hover:bg-brand-primary/90 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                                        className="w-full bg-brand-primary text-white font-bold py-2.5 md:py-3 text-sm md:text-base rounded-xl shadow-lg hover:shadow-xl hover:bg-brand-primary/90 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
                                         {isSubmitting ? 'Publicando...' : 'Publicar Resenha'}
                                     </button>

@@ -44,6 +44,14 @@ const USERS_SEED: Record<string, User & { passwordHash: string }> = { // storing
         avatarUrl: '/icon-liv.png',
         role: 'member',
         passwordHash: 'Clube@123'
+    },
+    'anabeatriz': {
+        id: 'user_bibia',
+        username: 'anabeatriz',
+        name: 'Ana Beatriz',
+        avatarUrl: '/icon-bibia.jpeg',
+        role: 'member',
+        passwordHash: 'Clube@123'
     }
 };
 
@@ -87,6 +95,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         // Success
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { passwordHash, ...safeUser } = user; // remove password from state
         setCurrentUser(safeUser);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(safeUser));

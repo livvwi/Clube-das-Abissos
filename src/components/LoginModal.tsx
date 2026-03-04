@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, User, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -16,8 +17,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, isRequi
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    if (!isOpen) return null;
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -32,22 +31,38 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, isRequi
         try {
             const result = await login(username, password);
             if (result.success) {
-                // Important: Call onClose() here, but the parent should also handle "unforcing" if needed.
-                // In our implementation, parent updates state based on currentUser presence.
                 onClose();
                 setUsername('');
                 setPassword('');
             } else {
                 setError(result.error || 'Erro ao realizar login');
             }
-        } catch (err) {
+        } catch {
             setError('Ocorreu um erro inesperado. Tente novamente.');
         } finally {
             setLoading(false);
         }
     };
 
-    return (
+    useEffect(() => {
+        const mainScroll = document.getElementById('main-scroll-container');
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+            if (mainScroll) mainScroll.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+            if (mainScroll) mainScroll.style.overflow = '';
+        }
+
+        return () => {
+            document.body.style.overflow = '';
+            if (mainScroll) mainScroll.style.overflow = '';
+        };
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    return createPortal(
         <div
             className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in"
         // Start blocking interactions if required
@@ -118,6 +133,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, isRequi
                     </button>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

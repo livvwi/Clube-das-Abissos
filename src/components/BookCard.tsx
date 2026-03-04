@@ -6,11 +6,15 @@ interface BookProps {
     author: string;
     coverUrl: string;
     featured?: boolean;
+    onClick?: () => void;
 }
 
-export const BookCard: React.FC<BookProps> = ({ title, author, coverUrl, featured = false }) => {
+export const BookCard: React.FC<BookProps> = ({ title, author, coverUrl, featured = false, onClick }) => {
     return (
-        <div className={`group relative flex-shrink-0 transition-transform duration-300 hover:-translate-y-2 ${featured ? 'w-full md:w-[400px]' : 'w-48'}`}>
+        <div
+            onClick={onClick}
+            className={`group relative flex-shrink-0 transition-transform duration-300 hover:-translate-y-2 cursor-pointer ${featured ? 'w-full md:w-[400px]' : 'w-48'}`}
+        >
             <div className={`relative rounded-2xl overflow-hidden shadow-lg ${featured ? 'aspect-[16/9]' : 'aspect-[2/3]'}`}>
                 <img
                     src={coverUrl}

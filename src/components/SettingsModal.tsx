@@ -1,5 +1,5 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { X, Moon, Sun, Layers, Type, Eye, Bell } from 'lucide-react';
 
@@ -11,28 +11,50 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const { preferences, updatePreference, toggleTheme } = usePreferences();
 
+    useEffect(() => {
+        const mainScroll = document.getElementById('main-scroll-container');
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+            if (mainScroll) mainScroll.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+            if (mainScroll) mainScroll.style.overflow = '';
+        }
+
+        return () => {
+            document.body.style.overflow = '';
+            if (mainScroll) mainScroll.style.overflow = '';
+        };
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden relative">
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(15,27,36,0.6)] p-4 animate-fade-in"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white rounded-2xl shadow-2xl w-[90vw] md:w-full max-w-2xl overflow-hidden relative z-[1001]"
+                onClick={e => e.stopPropagation()}
+            >
 
                 {/* Header */}
-                <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+                <div className="p-4 md:p-6 border-b border-gray-200 flex justify-between items-center">
                     <h2 className="text-2xl font-serif font-bold text-brand-dark">Configurações</h2>
                     <button onClick={onClose} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
                         <X size={20} className="text-gray-600" />
                     </button>
                 </div>
 
-                <div className="p-6 overflow-y-auto max-h-[70vh] space-y-8">
+                <div className="p-4 md:p-6 overflow-y-auto max-h-[70vh] space-y-6 md:space-y-8 pb-safe-bottom">
 
                     {/* Appearance Section */}
                     <section>
-                        <h3 className="flex items-center gap-2 text-lg font-bold text-brand-primary mb-4">
-                            <Layers size={20} /> Aparência
+                        <h3 className="flex items-center gap-2 text-base md:text-lg font-bold text-brand-primary mb-3 md:mb-4">
+                            <Layers size={18} /> Aparência
                         </h3>
-                        <div className="space-y-4 pl-7">
+                        <div className="space-y-4 pl-4 md:pl-7">
                             <div className="flex justify-between items-center">
                                 <div>
                                     <p className="font-medium text-gray-800">Tema</p>
@@ -88,10 +110,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
                     {/* Reading Preferences */}
                     <section>
-                        <h3 className="flex items-center gap-2 text-lg font-bold text-brand-primary mb-4">
-                            <Eye size={20} /> Preferências de Leitura
+                        <h3 className="flex items-center gap-2 text-base md:text-lg font-bold text-brand-primary mb-3 md:mb-4">
+                            <Eye size={18} /> Preferências de Leitura
                         </h3>
-                        <div className="space-y-3 pl-7">
+                        <div className="space-y-3 pl-4 md:pl-7">
                             <div className="flex items-center justify-between">
                                 <span className="text-gray-700">Ocultar resenhas com spoiler</span>
                                 <input
@@ -117,10 +139,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
                     {/* Notifications */}
                     <section>
-                        <h3 className="flex items-center gap-2 text-lg font-bold text-brand-primary mb-4">
-                            <Bell size={20} /> Notificações
+                        <h3 className="flex items-center gap-2 text-base md:text-lg font-bold text-brand-primary mb-3 md:mb-4">
+                            <Bell size={18} /> Notificações
                         </h3>
-                        <div className="space-y-3 pl-7">
+                        <div className="space-y-3 pl-4 md:pl-7">
                             <div className="flex items-center justify-between">
                                 <span className="text-gray-700">Receber notificações do clube</span>
                                 <input
@@ -135,6 +157,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

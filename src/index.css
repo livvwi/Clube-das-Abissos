@@ -5,15 +5,67 @@
 @tailwind utilities;
 
 @layer base {
+
+  html,
   body {
-    @apply bg-brand-light text-brand-dark font-sans overflow-x-hidden;
+    @apply bg-brand-light text-brand-dark font-sans overflow-x-hidden transition-colors duration-300;
   }
 
   h1,
   h2,
   h3,
   h4 {
-    @apply font-serif text-brand-dark;
+    @apply font-serif text-brand-dark transition-colors duration-300;
+  }
+
+  /* Dark mode overrides */
+  .dark {
+    color-scheme: dark;
+  }
+
+  .dark body {
+    @apply bg-gray-900 text-gray-50;
+  }
+
+  .dark .bg-brand-light {
+    @apply bg-gray-900 !important;
+  }
+
+  .dark .text-brand-dark,
+  .dark h1,
+  .dark h2,
+  .dark h3,
+  .dark h4 {
+    @apply text-gray-50 !important;
+  }
+
+  .dark .bg-white {
+    @apply bg-gray-800 !important;
+  }
+
+  .dark .bg-gray-50,
+  .dark .bg-gray-100,
+  .dark .bg-gray-200 {
+    @apply bg-gray-800 !important;
+  }
+
+  .dark .text-brand-secondary,
+  .dark .text-gray-500,
+  .dark .text-gray-600,
+  .dark .text-gray-700 {
+    @apply text-gray-400 !important;
+  }
+
+  .dark .border-gray-100,
+  .dark .border-gray-200 {
+    @apply border-gray-700 !important;
+  }
+
+  .dark input,
+  .dark select,
+  .dark textarea {
+    @apply bg-gray-800 text-gray-50 border-gray-700 placeholder-gray-500 !important;
+    color: white !important;
   }
 }
 
@@ -39,13 +91,37 @@
     width: 6px;
     height: 6px;
   }
+
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
     @apply bg-gray-300 rounded-full;
   }
+
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400;
+  }
+
+  /* Hide scrollbar completely but keep functionality */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Safe Area paddings */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .pb-safe-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);
   }
 }
