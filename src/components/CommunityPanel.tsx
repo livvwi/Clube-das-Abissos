@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, LogIn } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { fetchMessages, insertMessage } from '../services/db';
+import { supabase } from '../lib/supabaseClient';
 
 interface ChatMessage {
     id: string;
@@ -19,8 +21,6 @@ interface CommunityPanelProps {
     onCloseMobile?: () => void;
 }
 
-const STORAGE_KEY = 'club_chat_messages_v2';
-
 export const CommunityPanel: React.FC<CommunityPanelProps> = ({ isMobileMode, onCloseMobile }) => {
     const { currentUser } = useAuth();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -28,22 +28,60 @@ export const CommunityPanel: React.FC<CommunityPanelProps> = ({ isMobileMode, on
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const [isScrolledToBottom, setIsScrolledToBottom] = useState(true);
 
-    // Initial load
+    // Initial load & Setup realtime
     useEffect(() => {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-            try {
-                setMessages(JSON.parse(stored));
-            } catch (error) {
-                console.error("Failed to parse chat messages", error);
+        const loadMessages = async () => {
+            const { data, error } = await fetchMessages();
+            if (error) {
+                console.error("RLS bloqueou SELECT. Ajuste policies no Supabase para tabela messages.", error);
+                return;
             }
-        }
-    }, []);
+            if (data) {
+                const formatted = data.map((d: any) => ({
+                    id: d.id,
+                    text: d.text,
+                    createdAt: d.created_at,
+                    user: {
+                        id: d.user_id,
+                        name: d.user_name,
+                        username: d.user_username,
+                        avatarUrl: d.user_avatar
+                    }
+                }));
+                setMessages(formatted);
+            }
+        };
 
-    // Save to storage on change
-    useEffect(() => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-    }, [messages]);
+        loadMessages();
+
+        const channel = supabase.channel('realtime_messages')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+                const newMsg = payload.new;
+                setMessages(prev => {
+                    // Check if message already exists (optimistic update)
+                    if (prev.some(m => m.id === newMsg.id || m.text === newMsg.text && m.user?.id === newMsg.user_id && Math.abs(new Date(m.createdAt).getTime() - new Date(newMsg.created_at).getTime()) < 5000)) {
+                        return prev;
+                    }
+                    const formatted = {
+                        id: newMsg.id,
+                        text: newMsg.text,
+                        createdAt: newMsg.created_at,
+                        user: {
+                            id: newMsg.user_id,
+                            name: newMsg.user_name,
+                            username: newMsg.user_username,
+                            avatarUrl: newMsg.user_avatar
+                        }
+                    };
+                    return [...prev, formatted];
+                });
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     // Handle scroll events to detect if user is at the bottom
     const handleScroll = () => {
@@ -59,17 +97,22 @@ export const CommunityPanel: React.FC<CommunityPanelProps> = ({ isMobileMode, on
         if (isScrolledToBottom && chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
-         
+
     }, [messages, isScrolledToBottom]);
 
 
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!inputText.trim() || !currentUser) return;
 
+        const textToSend = inputText.trim();
+        setInputText('');
+
+        // Optimistic UI update
+        const tempId = Date.now().toString() + Math.random().toString(36).substring(2, 9);
         const newMsg: ChatMessage = {
-            id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
-            text: inputText.trim(),
+            id: tempId,
+            text: textToSend,
             createdAt: new Date().toISOString(),
             user: {
                 id: currentUser.id,
@@ -80,7 +123,6 @@ export const CommunityPanel: React.FC<CommunityPanelProps> = ({ isMobileMode, on
         };
 
         setMessages(prev => [...prev, newMsg]);
-        setInputText('');
 
         // Force scroll to bottom when user sends a message
         setIsScrolledToBottom(true);
@@ -89,6 +131,13 @@ export const CommunityPanel: React.FC<CommunityPanelProps> = ({ isMobileMode, on
                 chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
             }
         }, 50);
+
+        const { error } = await insertMessage({ currentUser, text: textToSend });
+        if (error) {
+            console.error("RLS bloqueou INSERT. Ajuste policies no Supabase para tabela messages.", error);
+            // Revert optimistic update on failure
+            setMessages(prev => prev.filter(m => m.id !== tempId));
+        }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

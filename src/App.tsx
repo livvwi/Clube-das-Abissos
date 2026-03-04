@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { BookCard } from './components/BookCard';
 import { CommunityPanel } from './components/CommunityPanel';
@@ -11,6 +11,8 @@ import { LoginModal } from './components/LoginModal';
 import { BookDetailsModal } from './components/BookDetailsModal';
 import { useNotifications } from './contexts/NotificationsContext';
 import { NotificationsDropdown } from './components/NotificationsDropdown';
+import { insertMessage, fetchMessages, insertReview, insertNotificationForReview } from './services/db';
+import { supabase } from './lib/supabaseClient';
 
 const januaryBooks = booksByMonth['2026-01'] || [];
 const februaryBooks = booksByMonth['2026-02'] || [];
@@ -40,9 +42,45 @@ function App() {
   const { preferences, toggleTheme } = usePreferences();
   const { unreadCount } = useNotifications();
 
+  useEffect(() => {
+    console.log("Supabase conectado:", supabase);
+  }, []);
+
   // Better approach: Derived state for the modal
   const showLoginModal = isLoginOpen || (!loading && !currentUser);
   const isLoginRequired = !loading && !currentUser ? true : false;
+
+  const handleTestSupabase = async () => {
+    if (!currentUser) {
+      alert("Faça login para testar");
+      return;
+    }
+
+    console.log("Testing Supabase...");
+    try {
+      const msgRes = await insertMessage({ currentUser, text: "Teste de mensagem via Supabase!" });
+      console.log("Insert Message:", msgRes);
+
+      const msgs = await fetchMessages();
+      console.log("Fetch Messages:", msgs);
+
+      const revRes = await insertReview({
+        currentUser,
+        bookTitle: "Livro Teste Supabase",
+        rating: 5,
+        content: "Uma resenha incrível de teste",
+        spoilerFree: true
+      });
+      console.log("Insert Review:", revRes);
+
+      const notifRes = await insertNotificationForReview({ currentUser, bookTitle: "Livro Teste Supabase" });
+      console.log("Insert Notification:", notifRes);
+
+      alert("Testes do Supabase concluídos. Verifique o console para os resultados ou erros.");
+    } catch (error) {
+      console.error("Test failed:", error);
+    }
+  };
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-brand-light font-sans text-brand-dark overflow-hidden">
@@ -279,6 +317,16 @@ function App() {
           setIsReviewsOpen(true);
         }}
       />
+
+      {/* Temporary Test Supabase Button */}
+      {currentUser && (
+        <button
+          onClick={handleTestSupabase}
+          className="fixed bottom-20 left-4 z-50 bg-black text-white p-2 rounded-lg text-xs shadow-lg font-mono opacity-80 hover:opacity-100"
+        >
+          Testar Supabase
+        </button>
+      )}
     </div>
   );
 }

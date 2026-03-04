@@ -6,6 +6,8 @@ import { booksByMonth, getMonthName } from '../data';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationsContext';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { fetchAllReviews, insertReview, insertNotificationForReview } from '../services/db';
+import { supabase } from '../lib/supabaseClient';
 
 // --- Interfaces ---
 export interface Review {
@@ -34,25 +36,13 @@ interface ReviewsModalProps {
     targetBookId?: number | null;
 }
 
-// --- LocalStorage Helpers ---
-const STORAGE_KEY = 'clube_abissos_reviews_v1';
-
-const loadReviews = (): Review[] => {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        return saved ? JSON.parse(saved) : [];
-    } catch (error) {
-        console.error("Erro ao carregar resenhas:", error);
-        return [];
+// --- Supabase Helpers ---
+const getBookDetailsFromTitle = (title: string) => {
+    for (const [monthKey, books] of Object.entries(booksByMonth)) {
+        const book = books.find(b => b.title === title) as any;
+        if (book) return { monthKey, bookId: book.id, bookAuthor: book.author };
     }
-};
-
-const saveReviewsToStorage = (reviews: Review[]) => {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(reviews));
-    } catch (error) {
-        console.error("Erro ao salvar resenhas:", error);
-    }
+    return { monthKey: '2026-01', bookId: 0, bookAuthor: 'Autor Desconhecido' };
 };
 
 // --- Component ---
@@ -82,9 +72,53 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose, tar
 
     // --- Effects ---
 
-    // Load reviews on mount
+    // Load reviews on mount & setup Realtime
     useEffect(() => {
-        setReviews(loadReviews());
+        let isMounted = true;
+
+        const load = async () => {
+            const { data, error } = await fetchAllReviews();
+            if (error) {
+                console.error("RLS bloqueou SELECT. Ajuste policies no Supabase para tabela reviews.");
+                return;
+            }
+            if (data && isMounted) {
+                const formatted = data.map((d: any) => {
+                    const { monthKey, bookId, bookAuthor } = getBookDetailsFromTitle(d.book_title);
+                    return {
+                        id: d.id,
+                        monthKey,
+                        bookId,
+                        bookTitle: d.book_title,
+                        bookAuthor,
+                        rating: d.rating,
+                        text: d.content,
+                        date: d.created_at,
+                        spoiler: d.spoiler_free,
+                        user: {
+                            id: d.user_id,
+                            name: d.user_name,
+                            username: d.user_username,
+                            avatarUrl: d.user_avatar
+                        }
+                    };
+                });
+                setReviews(formatted);
+            }
+        };
+
+        load();
+
+        const channel = supabase.channel('realtime_reviews')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'reviews' }, () => {
+                load();
+            })
+            .subscribe();
+
+        return () => {
+            isMounted = false;
+            supabase.removeChannel(channel);
+        };
     }, []);
 
     // Sync selectedMonth with targetMonth
@@ -170,7 +204,7 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose, tar
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!validate()) return;
         if (!currentUser) return;
@@ -182,8 +216,25 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose, tar
             return;
         }
 
+        const { data, error } = await insertReview({
+            currentUser,
+            bookTitle: book.title,
+            rating: form.rating,
+            content: form.text,
+            spoilerFree: form.spoiler
+        });
+
+        if (error) {
+            console.error("RLS bloqueou INSERT. Ajuste policies no Supabase para tabela reviews.");
+            alert("Não foi possível carregar agora. RLS bloqueou a inserção de resenha.");
+            setIsSubmitting(false);
+            return;
+        }
+
+        await insertNotificationForReview({ currentUser, bookTitle: book.title });
+
         const newReview: Review = {
-            id: Date.now().toString(),
+            id: data ? data[0].id : Date.now().toString(),
             monthKey: selectedMonth,
             bookId: book.id,
             bookTitle: book.title,
@@ -200,9 +251,7 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose, tar
             }
         };
 
-        const updatedReviews = [newReview, ...reviews];
-        setReviews(updatedReviews);
-        saveReviewsToStorage(updatedReviews); // Persist
+        setReviews(prev => [newReview, ...prev.filter(r => r.id !== newReview.id)]); // Use unique reviews only
 
         // Dispatch notification
         if (preferences.notifications) {
@@ -237,11 +286,10 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose, tar
         setIsSubmitting(false);
     };
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (window.confirm("Tem certeza que deseja excluir esta resenha?")) {
-            const updated = reviews.filter(r => r.id !== id);
-            setReviews(updated);
-            saveReviewsToStorage(updated);
+            setReviews(prev => prev.filter(r => r.id !== id));
+            await supabase.from('reviews').delete().eq('id', id);
             window.dispatchEvent(new Event('reviews:updated'));
         }
     };

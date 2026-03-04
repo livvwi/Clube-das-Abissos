@@ -22,25 +22,38 @@ interface BookDetailsModalProps {
     onWriteReview?: (monthKey: string, bookId: number) => void;
 }
 
-const STORAGE_KEY = 'clube_abissos_reviews_v1';
+import { fetchReviewsByBook } from '../services/db';
 
 export const BookDetailsModal: React.FC<BookDetailsModalProps> = ({ book, isOpen, onClose, onWriteReview }) => {
     const { currentUser } = useAuth();
     const [reviews, setReviews] = useState<Review[]>([]);
 
-    const loadBookReviews = useCallback(() => {
+    const loadBookReviews = useCallback(async () => {
         if (!book) return;
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                const allReviews: Review[] = JSON.parse(saved);
-                const filtered = allReviews.filter(r => r.bookId === book.id);
-                // Sort by date desc
-                filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                setReviews(filtered);
-            }
-        } catch (e) {
-            console.error("Failed to load reviews inside book modal", e);
+        const { data, error } = await fetchReviewsByBook(book.title);
+        if (error) {
+            console.error("Failed to load reviews inside book modal", error);
+            return;
+        }
+        if (data) {
+            const formatted = data.map((d: any) => ({
+                id: d.id,
+                monthKey: '', // Not strictly needed here
+                bookId: book.id,
+                bookTitle: d.book_title,
+                bookAuthor: book.author,
+                rating: d.rating,
+                text: d.content,
+                date: d.created_at,
+                spoiler: d.spoiler_free,
+                user: {
+                    id: d.user_id,
+                    name: d.user_name,
+                    username: d.user_username,
+                    avatarUrl: d.user_avatar
+                }
+            }));
+            setReviews(formatted);
         }
     }, [book]);
 

@@ -1,4 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { fetchNotifications, markAllNotificationsRead } from '../services/db';
+import { supabase } from '../lib/supabaseClient';
+import { booksByMonth } from '../data';
 
 export interface NotificationActor {
     id: string;
@@ -32,31 +35,67 @@ interface NotificationsContextType {
     clearAll: () => void;
 }
 
-const STORAGE_KEY = 'club_notifications_v1';
-
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
 
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
-    // Initial load
-    useEffect(() => {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-            try {
-                setNotifications(JSON.parse(stored));
-            } catch (e) {
-                console.error('Failed to parse notifications', e);
-            }
+    const loadFromDb = async () => {
+        const { data, error } = await fetchNotifications();
+        if (error) {
+            console.error('RLS bloqueou SELECT. Ajuste policies no Supabase para tabela notifications.', error);
+            return;
         }
+        if (data) {
+            const getBookDetailsFromTitle = (title: string) => {
+                for (const [monthKey, books] of Object.entries(booksByMonth)) {
+                    const book = books.find(b => b.title === title) as any;
+                    if (book) return { monthKey, bookId: book.id };
+                }
+                return { monthKey: '2026-01', bookId: 0 };
+            };
+
+            const formatted: NotificationItem[] = data.map((d: any) => {
+                const { monthKey, bookId } = getBookDetailsFromTitle(d.book_title);
+                return {
+                    id: d.id,
+                    type: 'review',
+                    createdAt: d.created_at,
+                    read: d.read,
+                    actor: {
+                        id: d.actor_id,
+                        name: d.actor_name,
+                        username: d.actor_name, // fallback for username
+                        avatarUrl: d.actor_avatar,
+                    },
+                    meta: {
+                        monthKey,
+                        bookId,
+                        bookTitle: d.book_title,
+                    }
+                };
+            });
+            setNotifications(formatted);
+        }
+    };
+
+    // Initial load & realtime
+    useEffect(() => {
+        loadFromDb();
+
+        const channel = supabase.channel('realtime_notifications')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+                loadFromDb();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
 
-    // Save to storage
-    useEffect(() => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
-    }, [notifications]);
-
     const addNotification = (notif: Omit<NotificationItem, 'id' | 'createdAt' | 'read'>) => {
+        // Optimistic add (API already handles real insertion for reviews)
         const newNotification: NotificationItem = {
             ...notif,
             id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
@@ -66,14 +105,14 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         setNotifications(prev => [newNotification, ...prev]);
     };
 
-    const markAsRead = (id: string) => {
-        setNotifications(prev =>
-            prev.map(n => (n.id === id ? { ...n, read: true } : n))
-        );
+    const markAsRead = async (id: string) => {
+        setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
+        await supabase.from('notifications').update({ read: true }).eq('id', id);
     };
 
-    const markAllAsRead = () => {
+    const markAllAsRead = async () => {
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        await markAllNotificationsRead();
     };
 
     const clearAll = () => {
