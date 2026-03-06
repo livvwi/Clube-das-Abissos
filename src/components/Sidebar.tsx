@@ -19,7 +19,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onOpe
     ];
 
     return (
-        <aside className="w-24 bg-brand-light flex flex-col items-center py-8 border-r border-gray-200 h-screen sticky top-0">
+        <aside className="w-24 bg-brand-light flex flex-col items-center py-8 border-r border-gray-200 h-screen sticky top-0 z-[100]">
             <div className="mb-12">
                 {/* Logo Placeholder - using a simple icon if image not found */}
                 <div className="w-12 h-12 bg-brand-primary rounded-xl flex items-center justify-center text-white font-serif font-bold text-xl shadow-lg">
@@ -43,7 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onOpe
                             <item.icon size={24} strokeWidth={isActive ? 2.5 : 2} />
 
                             {/* Tooltip */}
-                            <span className="absolute left-14 bg-brand-dark text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                            <span className="fixed left-[72px] bg-gray-900 border border-gray-700 text-white font-medium text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-[9999] shadow-lg">
                                 {item.label}
                             </span>
                         </button>
