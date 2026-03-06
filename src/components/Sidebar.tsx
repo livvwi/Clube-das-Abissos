@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
-import { Home, BookOpen, Settings, Library } from 'lucide-react';
+import { Home, BookOpen, Settings } from 'lucide-react';
 import { SettingsModal } from './SettingsModal';
 
 interface SidebarProps {
     activeTab: string;
     setActiveTab: (tab: string) => void;
     onOpenReviews: () => void;
-    onOpenShelf: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onOpenReviews, onOpenShelf }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onOpenReviews }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     const menuItems = [
         { id: 'home', icon: Home, label: 'Início' },
         { id: 'library', icon: BookOpen, label: 'Resenhas' },
-        { id: 'shelf', icon: Library, label: 'Minha Estante' },
     ];
 
     return (
@@ -33,7 +31,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onOpe
                     return (
                         <button
                             key={item.id}
-                            onClick={() => item.id === 'library' ? onOpenReviews() : item.id === 'shelf' ? onOpenShelf() : setActiveTab(item.id)}
+                            onClick={() => item.id === 'library' ? onOpenReviews() : setActiveTab(item.id)}
                             className={`p-3 rounded-2xl transition-all duration-300 flex items-center justify-center group relative
                 ${isActive
                                     ? 'bg-brand-primary text-white shadow-md'

@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { BookCard } from './components/BookCard';
 import { ReviewsModal } from './components/ReviewsModal';
-import { MyShelfModal } from './components/MyShelfModal';
-import { Search, Bell, ChevronRight, LogIn, LogOut, Moon, Sun, Library } from 'lucide-react';
+import { Search, Bell, ChevronRight, LogIn, LogOut, Moon, Sun } from 'lucide-react';
 import { booksByMonth } from './data';
 import { useAuth } from './contexts/AuthContext';
 import { usePreferences } from './contexts/PreferencesContext';
@@ -30,7 +29,6 @@ interface Book {
 function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
-  const [isShelfOpen, setIsShelfOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -58,7 +56,6 @@ function App() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           onOpenReviews={() => setIsReviewsOpen(true)}
-          onOpenShelf={() => setIsShelfOpen(true)}
         />
       </div>
 
@@ -225,14 +222,6 @@ function App() {
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
             <span className="text-[10px] mt-1 font-medium">Resenhas</span>
           </button>
-
-          <button
-            onClick={() => setIsShelfOpen(true)}
-            className={`flex flex-col items-center justify-center w-16 h-12 rounded-xl transition-colors ${isShelfOpen ? 'text-brand-primary bg-brand-primary/5' : 'text-brand-secondary active:bg-gray-50'}`}
-          >
-            <Library size={20} />
-            <span className="text-[10px] mt-1 font-medium">Estante</span>
-          </button>
         </div>
       </div>
       <ReviewsModal
@@ -247,7 +236,6 @@ function App() {
         targetReviewId={targetReviewId}
         targetBookId={targetBookId}
       />
-      <MyShelfModal isOpen={isShelfOpen} onClose={() => setIsShelfOpen(false)} />
       <LoginModal
         isOpen={showLoginModal}
         onClose={() => setIsLoginOpen(false)}
