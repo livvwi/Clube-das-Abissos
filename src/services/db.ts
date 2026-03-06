@@ -1,32 +1,5 @@
 import { supabase } from "../lib/supabaseClient";
 
-export async function insertMessage(params: { currentUser: any, text: string }) {
-    if (!supabase) return { data: null, error: { message: "Supabase client not initialized" } as any };
-    const { currentUser, text } = params;
-    const { data, error } = await supabase.from('messages').insert([
-        {
-            user_id: currentUser.id,
-            user_name: currentUser.name,
-            user_username: currentUser.username,
-            user_avatar: currentUser.avatarUrl,
-            text: text
-        }
-    ]).select();
-
-    if (error) {
-        console.error("Supabase error (insertMessage):", error);
-    }
-    return { data, error };
-}
-
-export async function fetchMessages() {
-    if (!supabase) return { data: [], error: null };
-    const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
-    if (error) {
-        console.error("Supabase error (fetchMessages):", error);
-    }
-    return { data, error };
-}
 
 export async function insertReview(params: { currentUser: any, bookTitle: string, rating: number, content: string, spoilerFree?: boolean }) {
     if (!supabase) return { data: null, error: { message: "Supabase client not initialized" } as any };
