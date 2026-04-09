@@ -53,9 +53,8 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose, tar
     const [reviews, setReviews] = useState<Review[]>([]);
     // Use currently available months from data
     const availableMonths = Object.keys(booksByMonth).sort();
-    // Default to the first month or a specific one? Let's default to the current month if available, else first.
-    // For now, hardcode '2026-01' or pick dynamically. user asked for 'selector'.
-    const [selectedMonth, setSelectedMonth] = useState(availableMonths[0] || '2026-01');
+    // Default to the last month (most recent)
+    const [selectedMonth, setSelectedMonth] = useState(availableMonths[availableMonths.length - 1] || '2026-01');
 
     const [form, setForm] = useState({
         bookId: 0,

@@ -15,6 +15,7 @@ import { supabase } from './lib/supabaseClient';
 const januaryBooks = booksByMonth['2026-01'] || [];
 const februaryBooks = booksByMonth['2026-02'] || [];
 const marchBooks = booksByMonth['2026-03'] || [];
+const aprilBooks = booksByMonth['2026-04'] || [];
 
 interface Book {
   id: number;
@@ -24,6 +25,7 @@ interface Book {
   synopsis?: string;
   releaseDate?: string;
   pages?: number;
+  category?: string;
 }
 
 function App() {
@@ -130,8 +132,6 @@ function App() {
         {/* Scrollable Content */}
         <div id="main-scroll-container" className="flex-1 overflow-y-auto px-4 md:px-8 pb-12 block">
 
-
-
           {/* Popular Section */}
           <section className="mb-10 w-full overflow-hidden">
             <div className="flex flex-col sm:flex-row justify-between sm:items-end mb-4 sm:mb-6 gap-2 sm:gap-0">
@@ -189,6 +189,29 @@ function App() {
 
             <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-6 sm:pb-8 -mx-4 px-4 sm:mx-0 sm:px-0 custom-scrollbar scroll-smooth snap-x snap-mandatory">
               {marchBooks.map((book) => (
+                <div key={book.id} className="snap-start shrink-0 w-[140px] sm:w-[180px]">
+                  <BookCard
+                    title={book.title}
+                    author={book.author}
+                    coverUrl={book.cover}
+                    onClick={() => setSelectedBook(book)}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* April Section */}
+          <section className="mb-10 w-full overflow-hidden">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-end mb-4 sm:mb-6 gap-2 sm:gap-0">
+              <h2 className="text-xl sm:text-2xl font-serif font-bold text-brand-dark truncate pr-4">Livro do Mês de Abril</h2>
+              <button className="flex items-center w-fit text-sm font-medium text-brand-secondary hover:text-brand-primary transition-colors gap-1 group whitespace-nowrap">
+                Ver Todos <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+
+            <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-6 sm:pb-8 -mx-4 px-4 sm:mx-0 sm:px-0 custom-scrollbar scroll-smooth snap-x snap-mandatory">
+              {aprilBooks.map((book) => (
                 <div key={book.id} className="snap-start shrink-0 w-[140px] sm:w-[180px]">
                   <BookCard
                     title={book.title}

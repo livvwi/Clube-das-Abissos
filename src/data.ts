@@ -1,6 +1,6 @@
 
 // Mock data source for books arranged by month
-export const booksByMonth: Record<string, { id: number; title: string; author: string; cover: string; synopsis?: string; releaseDate?: string; pages?: number; }[]> = {
+export const booksByMonth: Record<string, { id: number; title: string; author: string; cover: string; synopsis?: string; releaseDate?: string; pages?: number; category?: string; }[]> = {
     "2026-01": [
         {
             id: 1,
@@ -33,6 +33,16 @@ export const booksByMonth: Record<string, { id: number; title: string; author: s
             releaseDate: '2 de fevereiro de 2026',
             pages: 416
         },
+    ],
+    "2026-04": [
+        {
+            id: 301,
+            title: 'Coraline',
+            author: 'Neil Gaiman',
+            cover: '/coraline.capa.jpg',
+            synopsis: 'Coraline conta a história de uma menina que descobre uma porta secreta em sua nova casa. Ao atravessá-la, encontra uma versão alternativa de sua vida — aparentemente perfeita, mas que esconde segredos sombrios. Uma narrativa envolvente que mistura fantasia e suspense, explorando coragem, identidade e escolhas.',
+            category: 'Fantasia / Terror leve / Juvenil'
+        }
     ]
 };
 
