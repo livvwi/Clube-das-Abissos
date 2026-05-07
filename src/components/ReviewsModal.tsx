@@ -326,7 +326,7 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose, tar
         >
             <div
                 ref={modalRef}
-                className="bg-white w-full max-w-4xl h-[100dvh] md:h-[90vh] md:rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden relative"
+                className="bg-white dark:!bg-slate-900 dark:md:!bg-white w-full max-w-4xl h-[100dvh] md:h-[90vh] md:rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden relative"
                 onClick={e => e.stopPropagation()} // Prevent close on modal click
                 tabIndex={-1}
             >
@@ -334,15 +334,15 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose, tar
                 <button
                     ref={closeButtonRef}
                     onClick={onClose}
-                    className="absolute top-4 right-4 p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition-colors z-10"
+                    className="absolute top-4 right-4 p-2 bg-gray-100 dark:!bg-slate-800 dark:md:!bg-gray-100 hover:bg-gray-200 dark:hover:!bg-slate-700 dark:md:hover:!bg-gray-200 rounded-full text-gray-600 dark:!text-gray-300 dark:md:!text-gray-600 transition-colors z-10"
                     aria-label="Fechar"
                 >
                     <X size={20} />
                 </button>
 
                 {/* --- Left Column: Posts List --- */}
-                <div className="w-full md:w-3/5 bg-gray-50 flex flex-col border-r border-gray-100 h-[50vh] md:h-full">
-                    <div className="p-4 md:p-6 border-b border-gray-200 bg-white sticky top-0 z-10 space-y-3 shrink-0">
+                <div className="w-full md:w-3/5 bg-gray-50 dark:!bg-slate-900 dark:md:!bg-gray-50 flex flex-col border-r border-gray-100 dark:!border-slate-800 dark:md:!border-gray-100 h-[50vh] md:h-full">
+                    <div className="p-4 md:p-6 border-b border-gray-200 dark:!border-slate-800 dark:md:!border-gray-200 bg-white dark:!bg-slate-900 dark:md:!bg-white sticky top-0 z-10 space-y-3 shrink-0">
                         <div className="flex justify-between items-center">
                             <h2 id="modal-title" className="font-serif font-bold text-xl md:text-2xl text-brand-primary">Resenhas do Clube</h2>
                             <button
@@ -375,13 +375,13 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose, tar
 
                     <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar">
                         {filteredReviews.length === 0 ? (
-                            <div className="text-center py-10 text-gray-400">
+                            <div className="text-center py-10 text-gray-400 dark:!text-gray-500 dark:md:!text-gray-400">
                                 <BookOpen size={48} className="mx-auto mb-3 opacity-50" />
                                 <p>Nenhuma resenha em {getMonthName(selectedMonth)}. <br />Seja o primeiro a postar!</p>
                             </div>
                         ) : (
                             filteredReviews.map(review => (
-                                <div id={`review-${review.id}`} key={review.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-500">
+                                <div id={`review-${review.id}`} key={review.id} className="bg-white dark:!bg-slate-800 dark:md:!bg-white p-5 rounded-xl shadow-sm border border-gray-100 dark:!border-slate-700 dark:md:!border-gray-100 hover:shadow-md transition-all duration-500">
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
                                             <h3 className="font-bold text-lg text-brand-primary leading-tight">{review.bookTitle}</h3>
@@ -420,10 +420,10 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose, tar
                 </div>
 
                 {/* --- Right Column: Post Form --- */}
-                <div className="w-full md:w-2/5 flex flex-col h-[50vh] md:h-full border-t border-gray-200 md:border-t-0 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] md:shadow-none z-20">
-                    <div className="p-4 md:p-6 bg-white flex-1 overflow-y-auto pb-safe-bottom hide-scrollbar">
+                <div className="w-full md:w-2/5 flex flex-col h-[50vh] md:h-full border-t border-gray-200 dark:!border-slate-800 dark:md:!border-gray-200 md:border-t-0 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] md:shadow-none z-20">
+                    <div className="p-4 md:p-6 bg-white dark:!bg-slate-900 dark:md:!bg-white flex-1 overflow-y-auto pb-safe-bottom hide-scrollbar">
                         <div className="flex justify-between items-center mb-4 md:mb-6">
-                            <h3 className="font-bold text-lg md:text-xl text-brand-dark flex items-center gap-2">
+                            <h3 className="font-bold text-lg md:text-xl text-brand-dark dark:!text-white dark:md:!text-brand-dark flex items-center gap-2">
                                 <span className="bg-brand-primary text-white w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">✎</span>
                                 Nova Resenha
                             </h3>

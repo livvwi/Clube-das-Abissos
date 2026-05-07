@@ -13,7 +13,7 @@ export const BookCard: React.FC<BookProps> = ({ title, author, coverUrl, feature
     return (
         <div
             onClick={onClick}
-            className={`group relative flex-shrink-0 transition-transform duration-300 hover:-translate-y-2 cursor-pointer ${featured ? 'w-full md:w-[400px]' : 'w-48'}`}
+            className={`group relative flex-shrink-0 transition-transform duration-300 hover:-translate-y-2 cursor-pointer ${featured ? 'w-full md:w-[400px]' : 'w-48'} bg-transparent dark:!bg-slate-800 dark:md:!bg-transparent p-0 dark:!p-3 dark:md:!p-0 rounded-none dark:!rounded-[1.5rem] dark:md:!rounded-none`}
         >
             <div className={`relative rounded-2xl overflow-hidden shadow-lg ${featured ? 'aspect-[16/9]' : 'aspect-[2/3]'}`}>
                 <img
@@ -28,11 +28,11 @@ export const BookCard: React.FC<BookProps> = ({ title, author, coverUrl, feature
                 </button>
             </div>
 
-            <div className="mt-4">
-                <h3 className={`font-serif font-bold text-brand-dark leading-tight ${featured ? 'text-2xl' : 'text-lg'}`}>
+            <div className="mt-4 px-1 dark:!px-2 dark:md:!px-0">
+                <h3 className={`font-serif font-bold text-brand-dark dark:!text-white dark:md:!text-brand-dark leading-tight ${featured ? 'text-2xl' : 'text-lg'}`}>
                     {title}
                 </h3>
-                <p className="text-brand-secondary text-sm mt-1">{author}</p>
+                <p className="text-brand-secondary text-sm mt-1 dark:!text-slate-300 dark:md:!text-brand-secondary">{author}</p>
 
 
             </div>
