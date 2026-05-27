@@ -149,6 +149,7 @@ function App() {
                     title={book.title}
                     author={book.author}
                     coverUrl={book.cover}
+                    indicatedBy="Julianna"
                     onClick={() => setSelectedBook(book)}
                   />
                 </div>
@@ -172,6 +173,7 @@ function App() {
                     title={book.title}
                     author={book.author}
                     coverUrl={book.cover}
+                    indicatedBy="Leticia"
                     onClick={() => setSelectedBook(book)}
                   />
                 </div>
@@ -195,6 +197,7 @@ function App() {
                     title={book.title}
                     author={book.author}
                     coverUrl={book.cover}
+                    indicatedBy="Lívia"
                     onClick={() => setSelectedBook(book)}
                   />
                 </div>
@@ -218,6 +221,7 @@ function App() {
                     title={book.title}
                     author={book.author}
                     coverUrl={book.cover}
+                    indicatedBy="Ana Beatriz"
                     onClick={() => setSelectedBook(book)}
                   />
                 </div>
@@ -241,6 +245,7 @@ function App() {
                     title={book.title}
                     author={book.author}
                     coverUrl={book.cover}
+                    indicatedBy="Julianna"
                     onClick={() => setSelectedBook(book)}
                   />
                 </div>

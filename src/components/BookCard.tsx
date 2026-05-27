@@ -6,10 +6,11 @@ interface BookProps {
     author: string;
     coverUrl: string;
     featured?: boolean;
+    indicatedBy?: string;
     onClick?: () => void;
 }
 
-export const BookCard: React.FC<BookProps> = ({ title, author, coverUrl, featured = false, onClick }) => {
+export const BookCard: React.FC<BookProps> = ({ title, author, coverUrl, featured = false, indicatedBy, onClick }) => {
     return (
         <div
             onClick={onClick}
@@ -33,8 +34,11 @@ export const BookCard: React.FC<BookProps> = ({ title, author, coverUrl, feature
                     {title}
                 </h3>
                 <p className="text-brand-secondary text-sm mt-1 dark:!text-slate-300 dark:md:!text-brand-secondary">{author}</p>
-
-
+                {indicatedBy && (
+                    <p className="text-brand-secondary text-xs mt-0.5 opacity-80 italic dark:!text-slate-300 dark:md:!text-brand-secondary">
+                        ✦ Indicado por {indicatedBy}
+                    </p>
+                )}
             </div>
         </div>
     );
