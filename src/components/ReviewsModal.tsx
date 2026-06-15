@@ -45,14 +45,15 @@ const getBookDetailsFromTitle = (title: string) => {
     return { monthKey: '2026-01', bookId: 0, bookAuthor: 'Autor Desconhecido' };
 };
 
+// --- Available Months ---
+const availableMonths = Object.keys(booksByMonth).sort();
+
 // --- Component ---
 export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose, targetMonth, targetReviewId, targetBookId }) => {
     const { currentUser } = useAuth();
     const { addNotification } = useNotifications();
     const { preferences } = usePreferences();
     const [reviews, setReviews] = useState<Review[]>([]);
-    // Use currently available months from data
-    const availableMonths = Object.keys(booksByMonth).sort();
     // Default to the last month (most recent)
     const [selectedMonth, setSelectedMonth] = useState(availableMonths[availableMonths.length - 1] || '2026-01');
 
@@ -125,7 +126,7 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose, tar
         if (isOpen && targetMonth && availableMonths.includes(targetMonth)) {
             setSelectedMonth(targetMonth);
         }
-    }, [isOpen, targetMonth, availableMonths]);
+    }, [isOpen, targetMonth]);
 
     // Sync form with targetBookId
     useEffect(() => {
@@ -137,6 +138,14 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose, tar
             }, 100);
         }
     }, [isOpen, targetBookId]);
+
+    // Reset selected book if it doesn't belong to the newly selected month
+    useEffect(() => {
+        const currentBooks = booksByMonth[selectedMonth] || [];
+        if (!currentBooks.some(b => b.id === form.bookId)) {
+            setForm(prev => ({ ...prev, bookId: 0 }));
+        }
+    }, [selectedMonth, form.bookId]);
 
     // Scroll to target review and highlight
     useEffect(() => {
