@@ -1,5 +1,6 @@
 
 // Mock data source for books arranged by month
+// ...existing code...
 export const booksByMonth: Record<string, { id: number; title: string; author: string; cover: string; synopsis?: string; releaseDate?: string; pages?: number; category?: string; }[]> = {
     "2026-01": [
         {
@@ -56,9 +57,20 @@ export const booksByMonth: Record<string, { id: number; title: string; author: s
             releaseDate: '2014',
             pages: 174
         }
+    ],
+    "2026-06": [
+        {
+            id: 501,
+            title: 'Pachinko',
+            author: 'Min Jin Lee',
+            cover: '/pachinko.jpg',
+            synopsis: 'Livro narra a saga de três gerações de imigrantes coreanos no Japão do século XX e foi recomendado por Barack Obama.\n\nNo início dos anos 1900, a adolescente Sunja, filha adorada de um pescador aleijado, apaixona-se perdidamente por um rico forasteiro na costa perto de sua casa, na Coreia. Esse homem promete o mundo a ela, mas, quando descobre que está grávida — e que seu amado é casado —, Sunja se recusa a ser comprada. Em vez disso, aceita o pedido de casamento de um homem gentil e doente, um pastor que está de passagem pelo vilarejo, rumo ao Japão. A decisão de abandonar o lar e rejeitar o poderoso pai de seu filho dá início a uma saga dramática que se desdobrará ao longo de gerações por quase cem anos.\n\nNeste romance movido pelas batalhas enfrentadas por imigrantes, os salões de pachinko — o jogo de caça-níqueis onipresente em todo o Japão — são o ponto de convergência das preocupações centrais da história: identidade, pátria e pertencimento. Para a população coreana no Japão, discriminada e excluída — como Sunja e seus descendentes —, os salões são o principal meio de conseguir trabalho e tentar acumular algum dinheiro.\n\nUma grande história de amor, Pachinko é também um tributo aos sacrifícios, à ambição e à lealdade de milhares de estrangeiros desterrados. Das movimentadas ruas dos mercados aos corredores das mais prestigiadas universidades do Japão, passando pelos salões de aposta do submundo do crime, os personagens complexos e passionais deste livro sobrevivem e tentam prosperar, indiferentes ao grande arco da história.',
+            releaseDate: '2020',
+            pages: 528
+        }
     ]
 };
-
+  
 export const getMonthName = (monthKey: string) => {
     const [year, month] = monthKey.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1, 1);
