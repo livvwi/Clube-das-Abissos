@@ -67,6 +67,15 @@ export const booksByMonth: Record<string, { id: number; title: string; author: s
             synopsis: 'Livro narra a saga de três gerações de imigrantes coreanos no Japão do século XX e foi recomendado por Barack Obama.\n\nNo início dos anos 1900, a adolescente Sunja, filha adorada de um pescador aleijado, apaixona-se perdidamente por um rico forasteiro na costa perto de sua casa, na Coreia. Esse homem promete o mundo a ela, mas, quando descobre que está grávida — e que seu amado é casado —, Sunja se recusa a ser comprada. Em vez disso, aceita o pedido de casamento de um homem gentil e doente, um pastor que está de passagem pelo vilarejo, rumo ao Japão. A decisão de abandonar o lar e rejeitar o poderoso pai de seu filho dá início a uma saga dramática que se desdobrará ao longo de gerações por quase cem anos.\n\nNeste romance movido pelas batalhas enfrentadas por imigrantes, os salões de pachinko — o jogo de caça-níqueis onipresente em todo o Japão — são o ponto de convergência das preocupações centrais da história: identidade, pátria e pertencimento. Para a população coreana no Japão, discriminada e excluída — como Sunja e seus descendentes —, os salões são o principal meio de conseguir trabalho e tentar acumular algum dinheiro.\n\nUma grande história de amor, Pachinko é também um tributo aos sacrifícios, à ambição e à lealdade de milhares de estrangeiros desterrados. Das movimentadas ruas dos mercados aos corredores das mais prestigiadas universidades do Japão, passando pelos salões de aposta do submundo do crime, os personagens complexos e passionais deste livro sobrevivem e tentam prosperar, indiferentes ao grande arco da história.',
             releaseDate: '2020',
             pages: 528
+        },
+        {
+            id: 502,
+            title: 'O Beijo de Libra',
+            author: 'Ruth Oliveira',
+            cover: '/o beijo de libra.jpg',
+            synopsis: 'A relação distante entre Nicolas e Juliano engana quem vê de fora: por muitos anos, além de vizinhos, os dois foram melhores amigos.\n\nAos dezesseis, no entanto, seus caminhos começaram a se separar. Sem brigas, sem um grande drama por trás de tudo. Apenas o que de natural acontece na vida: mudanças. Assim, os inseparáveis amigos logo se depararam com uma realidade em que não compartilhavam nada em comum além do mesmo andar no condomínio onde moram e da mesma sala na escola onde estudam.\n\nPara Juliano, nenhuma grande reviravolta estava prevista; a amizade com o seu libriano favorito tinha acabado definitivamente. Para Nicolas, era impossível se apaixonar por aquele que sempre chamou de Jun, o melhor virginiano do mundo. Mas todas as certezas parecem cair por terra quando um certo libriano secreto decide que quer seu melhor amigo de volta.',
+            releaseDate: '2022',
+            pages: 357
         }
     ]
 };
